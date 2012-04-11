@@ -69,7 +69,7 @@ public:
 	CTcpConnection(CTcpServer * pTcpServer, const SocketClientData_t & sClient);
 	virtual ~CTcpConnection();
 public:
-	void Send(const char *szBytes, ssize_t nBytes);
+	void Send(COutputBuffer::Pointer pOutputBuffer);
 	void Close();
 private:
 	void __IoCallback(ev::io &watcher, int revents);
@@ -196,7 +196,7 @@ public:
 	void  OnClientTimeout(SocketClientData_t sClient);
 	ev::dynamic_loop & GetLoop() { return m_Loop; }
 private:
-	bool __Send(SocketClientData_t sClient, const char *pData, int nDataLen);
+	bool __Send(SocketClientData_t sClient, COutputBuffer::Pointer pOutputBuffer);
 	void __Accept(ev::io &watcher, int revents);
 	void __IdleCallback(ev::idle &watcher, int revents);
 	static void __SigCallback(ev::sig &signal, int revents);

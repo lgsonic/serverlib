@@ -52,9 +52,8 @@ CTcpConnection::~CTcpConnection()
 	m_Timer.stop();
 }
 
-void CTcpConnection::Send(const char * szBytes, ssize_t nBytes)
+void CTcpConnection::Send(COutputBuffer::Pointer pOutputBuffer)
 {
-	COutputBuffer::Pointer pOutputBuffer(new COutputBuffer(szBytes, nBytes));
 	m_WriteQueue.push(pOutputBuffer);
 	
 	m_Io.set(ev::READ|ev::WRITE);
@@ -215,7 +214,8 @@ bool CTcpServer::Send(SocketClientData_t sClient, const char *pData, int nDataLe
 {
 	pthread_spin_lock(&m_Spinlock);
 
-	m_Functions.push_back(std::tr1::bind(&CTcpServer::__Send, this, sClient, pData, nDataLen));
+	COutputBuffer::Pointer pOutputBuffer(new COutputBuffer(pData, nDataLen));
+	m_Functions.push_back(std::tr1::bind(&CTcpServer::__Send, this, sClient, pOutputBuffer));
 	m_Idle.start();
 	
 	pthread_spin_unlock(&m_Spinlock);
@@ -267,12 +267,12 @@ void  CTcpServer::OnClientTimeout(SocketClientData_t sClient)
 	m_SocketInfoManager.Remove(sClient);
 }
 
-bool CTcpServer::__Send(SocketClientData_t sClient, const char *pData, int nDataLen)
+bool CTcpServer::__Send(SocketClientData_t sClient, COutputBuffer::Pointer pOutputBuffer)
 {
 	CTcpConnection::Pointer pTcpConnection = m_SocketInfoManager.Get(sClient);
 	if(pTcpConnection)
 	{
-		pTcpConnection->Send(pData, nDataLen);
+		pTcpConnection->Send(pOutputBuffer);
 		return true;
 	}
 
