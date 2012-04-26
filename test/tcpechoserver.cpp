@@ -55,6 +55,7 @@ int port2 = 8888;
 static void* thread_run(void *)
 {
 	g_pTcpServer->Start(0, port);
+	return 0;
 }
 
 int main(int argc, char **argv)
