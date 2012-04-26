@@ -114,7 +114,7 @@ public:
 		
 		ConnectionPtr_t pConn;
 		ConnectionPtrMap_t::const_iterator it_find = m_Connections.find(sClient);
-		if(it_find != m_Connections.end())
+		if (it_find != m_Connections.end())
 		{
 			pConn = it_find->second;
 		}
@@ -198,7 +198,7 @@ public:
 private:
 	bool __Send(SocketClientData_t sClient, COutputBuffer::Pointer pOutputBuffer);
 	void __Accept(ev::io &watcher, int revents);
-	void __IdleCallback(ev::idle &watcher, int revents);
+	void __AsyncCallback(ev::async &watcher, int revents);
 	static void __SigCallback(ev::sig &signal, int revents);
 private:
 	CSocketInfoManager m_SocketInfoManager;
@@ -207,7 +207,7 @@ private:
 	int m_Socket;
 	ev::dynamic_loop m_Loop;
 	ev::io m_ListenIo;
-	ev::idle m_Idle;
+	ev::async m_Async;
 	static ev::sig  m_Sig;	// sig can only attach one loop
 	FunctionList_t m_Functions;
 	pthread_spinlock_t m_Spinlock;

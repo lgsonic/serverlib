@@ -61,7 +61,7 @@ void CTcpConnection::Send(COutputBuffer::Pointer pOutputBuffer)
 
 void CTcpConnection::Close()
 {
-	if(m_Socket > 0)
+	if (m_Socket > 0)
 	{
 		shutdown(m_Socket, SHUT_RDWR);
 		close(m_Socket);
@@ -91,8 +91,15 @@ void CTcpConnection::__IoCallback(ev::io &watcher, int revents)
 		} 
 		else if (nRead < 0) 
 		{
-			m_pTcpServer->OnClientRecvError(m_SocketClient, errno);
-			return;
+			if (errno == EAGAIN)
+			{
+				// ignore	
+			}
+			else
+			{
+				m_pTcpServer->OnClientRecvError(m_SocketClient, errno);
+				return;
+			}
 		}
 		else
 		{
@@ -114,8 +121,16 @@ void CTcpConnection::__IoCallback(ev::io &watcher, int revents)
 		ssize_t nWritten = write(watcher.fd, pBuffer->GetDataPos(), pBuffer->GetBytes());
 		if (nWritten < 0) 
 		{
-			m_pTcpServer->OnClientSendError(m_SocketClient, errno);
-			return;
+			if (errno == EAGAIN)
+			{
+				// ignore	
+				return;
+			}
+			else
+			{
+				m_pTcpServer->OnClientSendError(m_SocketClient, errno);
+				return;
+			}
 		}
 
 		m_nLasttime = (int)time(0);
@@ -181,13 +196,14 @@ bool CTcpServer::Start(unsigned int IP, unsigned short Port)
 	listen(m_Socket, SOMAXCONN);
 
 	m_ListenIo.set(m_Loop);
-	m_Idle.set(m_Loop);
+	m_Async.set(m_Loop);
 	m_Sig.set(m_Loop);
 
 	m_ListenIo.set<CTcpServer, &CTcpServer::__Accept>(this);
 	m_ListenIo.start(m_Socket, ev::READ);
 
-	m_Idle.set<CTcpServer, &CTcpServer::__IdleCallback>(this);
+	m_Async.set<CTcpServer, &CTcpServer::__AsyncCallback>(this);
+	m_Async.start();
 	
 	m_Sig.set<&CTcpServer::__SigCallback>();
 	m_Sig.start(SIGPIPE);
@@ -203,7 +219,7 @@ bool CTcpServer::Stop()
 	close(m_Socket);
 
 	m_ListenIo.stop();
-	m_Idle.stop();
+	m_Async.stop();
 	m_Sig.stop();
 	m_Loop.unloop();
 
@@ -216,7 +232,7 @@ bool CTcpServer::Send(SocketClientData_t sClient, const char *pData, int nDataLe
 
 	COutputBuffer::Pointer pOutputBuffer(new COutputBuffer(pData, nDataLen));
 	m_Functions.push_back(std::tr1::bind(&CTcpServer::__Send, this, sClient, pOutputBuffer));
-	m_Idle.start();
+	m_Async.send();
 	
 	pthread_spin_unlock(&m_Spinlock);
 	
@@ -226,7 +242,7 @@ bool CTcpServer::Send(SocketClientData_t sClient, const char *pData, int nDataLe
 bool CTcpServer::CloseClient(SocketClientData_t sClient)
 {
 	CTcpConnection::Pointer pTcpConnection = m_SocketInfoManager.Get(sClient);
-	if(pTcpConnection)
+	if (pTcpConnection)
 	{
 		pTcpConnection->Close();
 	}
@@ -270,7 +286,7 @@ void  CTcpServer::OnClientTimeout(SocketClientData_t sClient)
 bool CTcpServer::__Send(SocketClientData_t sClient, COutputBuffer::Pointer pOutputBuffer)
 {
 	CTcpConnection::Pointer pTcpConnection = m_SocketInfoManager.Get(sClient);
-	if(pTcpConnection)
+	if (pTcpConnection)
 	{
 		pTcpConnection->Send(pOutputBuffer);
 		return true;
@@ -304,7 +320,7 @@ void CTcpServer::__Accept(ev::io &watcher, int revents)
 
 }
 
-void CTcpServer::__IdleCallback(ev::idle &watcher, int revents)
+void CTcpServer::__AsyncCallback(ev::async &watcher, int revents)
 {
 	FunctionList_t functions;
 	
@@ -312,7 +328,6 @@ void CTcpServer::__IdleCallback(ev::idle &watcher, int revents)
 		pthread_spin_lock(&m_Spinlock);
 
 		functions.swap(m_Functions);
-		m_Idle.stop();
 
 		pthread_spin_unlock(&m_Spinlock);
 	}  

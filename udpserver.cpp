@@ -29,7 +29,7 @@ bool CUdpServer::Start(unsigned long IP, unsigned short Port)
 
 bool CUdpServer::Stop()
 {
-	if(m_Socket > 0)
+	if (m_Socket > 0)
 	{
 		close(m_Socket);
 		m_Socket = 0;
@@ -43,7 +43,7 @@ bool CUdpServer::Stop()
 
 void CUdpServer::Send(unsigned long IP, unsigned short Port, const char * pData, int nDataLen)
 {
-	if(m_Socket > 0)
+	if (m_Socket > 0)
 	{
 		struct sockaddr_in addr;
 		addr.sin_family = AF_INET;
@@ -66,7 +66,7 @@ void CUdpServer::__ReadCallback(ev::io &watcher, int revents)
 
 	ssize_t nRead = recvfrom(watcher.fd, szBuffer, sizeof(szBuffer), 0, (sockaddr*)&addr, &addrlen);
 
-	if(nRead > 0)
+	if (nRead > 0)
 	{
 		m_pDataHandle->OnDataReceived(ntohl(addr.sin_addr.s_addr), ntohs(addr.sin_port ), szBuffer, nRead);
 	}
