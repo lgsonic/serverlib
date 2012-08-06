@@ -1,6 +1,8 @@
 #include "tcpserver.h"
 
 
+#define WRITE_QUEUE_MAX_SIZE	1000000
+
 static void __SetNonblock(int fd)
 {
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
@@ -54,6 +56,12 @@ CTcpConnection::~CTcpConnection()
 
 void CTcpConnection::Send(COutputBuffer::Pointer pOutputBuffer)
 {
+	if (m_WriteQueue.size() > WRITE_QUEUE_MAX_SIZE)
+	{
+		m_pTcpServer->OnClientSendError(m_SocketClient, 0);
+		return;
+	}
+	
 	m_WriteQueue.push(pOutputBuffer);
 	
 	m_Io.set(ev::READ|ev::WRITE);

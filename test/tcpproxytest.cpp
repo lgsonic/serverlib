@@ -125,11 +125,13 @@ private:
 		{
 			char szSeq[20];
 			snprintf(szSeq, 20, "%d", total);
-			writebuf = testdata + szSeq;
+			int nPktLen = (int)testdata.size() + strlen(szSeq);
+			writebuf.insert(writebuf.end(), (char*)&nPktLen, (char*)&nPktLen+sizeof(int));
+			writebuf += (testdata + szSeq);
 		}
 		
 		int nWritten = write(watcher.fd, writebuf.c_str()+writelen, writebuf.size()-writelen);
-		
+
 		if (nWritten <= 0)
 		{
 			if (errno != EAGAIN)

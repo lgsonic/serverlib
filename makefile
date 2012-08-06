@@ -1,11 +1,13 @@
 CC=gcc
 CXX=g++
 AR=ar
+LN=ln -s
 PRJPATH=$(shell pwd)
-CPPFLAGS = -g -O2 -Wall -fPIC -I$(PRJPATH) -I$(PRJPATH)/ev
-LDLIBS = -lpthread -L$(PRJPATH)/ -lserver -L$(PRJPATH)/ev -lev
+CPPFLAGS = -g -O2 -Wall -fPIC -fno-strict-aliasing -I$(PRJPATH) -I$(PRJPATH)/ev
+LDLIBS = -lpthread -L$(PRJPATH)/ -lserver -lclient -L$(PRJPATH)/ev -lev
 DY_LDFLAGS = -shared -fPIC
 ST_LDFLAGS = crs
+VERSION_INFO = .0.1.6
 
 
 COMPILE.CXX = $(CXX) $(CPPFLAGS) -c
@@ -14,42 +16,65 @@ LINK.SHARE = $(CXX) $(DY_LDFLAGS)
 LINK.STATIC = $(AR) $(ST_LDFLAGS)
 
 
-COMMONOBJS=iserver.o tcpserver.o udpserver.o
+SERVERCOMMONOBJS=iserver.o tcpserver.o udpserver.o
 SERVERLIB=libserver.a
 SERVERLIBSHARE=libserver.so
+SERVERLIBSHAREV=libserver.so$(VERSION_INFO)
 
-TESTOBJS=test/tcpechoserver.o test/tcpechoclient.o test/udpechoserver.o test/udpechoclient.o
+CLIENTCOMMONOBJS=iclient.o tcpclient.o
+CLIENTLIB=libclient.a
+CLIENTLIBSHARE=libclient.so
+CLIENTLIBSHAREV=libclient.so$(VERSION_INFO)
+
+TESTOBJS=test/tcpechoserver.o test/tcpechoclient.o test/udpechoserver.o test/udpechoclient.o test/tcpproxy.o test/tcpproxytest.o
 TCPECHOSERVER=test/tcpechoserver
 TCPECHOCLIENT=test/tcpechoclient
 UDPECHOSERVER=test/udpechoserver
 UDPECHOCLIENT=test/udpechoclient
+TCPPROXY=test/tcpproxy
+TCPPROXYTEST=test/tcpproxytest
+TESTAPPS=$(TCPECHOSERVER) $(TCPECHOCLIENT) $(UDPECHOSERVER) $(UDPECHOCLIENT) $(TCPPROXY) $(TCPPROXYTEST)
 
-all: $(SERVERLIB) $(SERVERLIBSHARE) 
+all: $(SERVERLIB) $(SERVERLIBSHARE) $(CLIENTLIB) $(CLIENTLIBSHARE) 
 
-test: $(TCPECHOSERVER) $(TCPECHOCLIENT) $(UDPECHOSERVER) $(UDPECHOCLIENT)
+test: $(TESTAPPS)
 
 %.o:%.cpp %.h
 	$(COMPILE.CXX) $< -o $@
 
-$(SERVERLIB): $(COMMONOBJS)
-	$(LINK.STATIC) $@ $(COMMONOBJS)
+$(SERVERLIB): $(SERVERCOMMONOBJS)
+	$(LINK.STATIC) $@ $(SERVERCOMMONOBJS)
 
-$(SERVERLIBSHARE): $(COMMONOBJS)
-	$(LINK.SHARE) -o $@ $(COMMONOBJS)
+$(SERVERLIBSHARE): $(SERVERCOMMONOBJS)
+	$(LINK.SHARE) -o $(SERVERLIBSHAREV) $(SERVERCOMMONOBJS)
+	$(LN) $(SERVERLIBSHAREV) $(SERVERLIBSHARE)
 
-$(TCPECHOSERVER): $(TESTOBJS) $(SERVERLIB)
+$(CLIENTLIB): $(CLIENTCOMMONOBJS)
+	$(LINK.STATIC) $@ $(CLIENTCOMMONOBJS)
+
+$(CLIENTLIBSHARE): $(CLIENTCOMMONOBJS)
+	$(LINK.SHARE) -o $(CLIENTLIBSHAREV) $(CLIENTCOMMONOBJS)
+	$(LN) $(CLIENTLIBSHAREV) $(CLIENTLIBSHARE)
+
+$(TCPECHOSERVER): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
 	$(CXX) -o $@ test/tcpechoserver.o $(LDLIBS)
 
-$(TCPECHOCLIENT): $(TESTOBJS) $(SERVERLIB)
-	$(CXX) -o $@ test/tcpechoclient.o  $(LDLIBS)
+$(TCPECHOCLIENT): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
+	$(CXX) -o $@ test/tcpechoclient.o $(LDLIBS)
 
-$(UDPECHOSERVER): $(TESTOBJS) $(SERVERLIB)
+$(UDPECHOSERVER): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
 	$(CXX) -o $@ test/udpechoserver.o $(LDLIBS)
 
-$(UDPECHOCLIENT): $(TESTOBJS) $(SERVERLIB)
-	$(CXX) -o $@ test/udpechoclient.o  $(LDLIBS)
+$(UDPECHOCLIENT): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
+	$(CXX) -o $@ test/udpechoclient.o $(LDLIBS)
+
+$(TCPPROXY): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
+	$(CXX) -o $@ test/tcpproxy.o $(LDLIBS) 
+
+$(TCPPROXYTEST): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
+	$(CXX) -o $@ test/tcpproxytest.o $(LDLIBS) 
 
 
 clean:
-	rm -f $(COMMONOBJS) $(SERVERLIB) $(SERVERLIBSHARE)  $(TESTOBJS) $(TCPECHOSERVER) $(TCPECHOCLIENT) $(UDPECHOSERVER) $(UDPECHOCLIENT)
+	rm -f $(SERVERCOMMONOBJS) $(SERVERLIB) $(SERVERLIBSHARE)  $(SERVERLIBSHAREV) $(CLIENTCOMMONOBJS) $(CLIENTLIB) $(CLIENTLIBSHARE) $(CLIENTLIBSHAREV) $(TESTOBJS) $(TESTAPPS)
 
