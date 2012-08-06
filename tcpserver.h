@@ -4,6 +4,7 @@
 
 #include "iserver.h"
 #include "outputbuffer.h"
+#include "sighandle.h"
 #include <ev++.h>
 #include <stdlib.h>
 #include <string.h>
@@ -165,7 +166,6 @@ private:
 	bool __Send(SocketClientData_t sClient, COutputBuffer::Pointer pOutputBuffer);
 	void __Accept(ev::io &watcher, int revents);
 	void __AsyncCallback(ev::async &watcher, int revents);
-	static void __SigCallback(ev::sig &signal, int revents);
 private:
 	CSocketInfoManager m_SocketInfoManager;
 	ITcpServerDataHandle * m_pDataHandle;
@@ -174,7 +174,6 @@ private:
 	ev::dynamic_loop m_Loop;
 	ev::io m_ListenIo;
 	ev::async m_Async;
-	static ev::sig  m_Sig;	// sig can only attach one loop
 	FunctionList_t m_Functions;
 	pthread_spinlock_t m_Spinlock;
 };

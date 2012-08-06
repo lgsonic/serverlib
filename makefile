@@ -7,7 +7,7 @@ CPPFLAGS = -g -O2 -Wall -fPIC -fno-strict-aliasing -I$(PRJPATH) -I$(PRJPATH)/ev
 LDLIBS = -lpthread -L$(PRJPATH)/ -lserver -lclient -L$(PRJPATH)/ev -lev
 DY_LDFLAGS = -shared -fPIC
 ST_LDFLAGS = crs
-VERSION_INFO = .0.1.6
+VERSION_INFO = .0.1.8
 
 
 COMPILE.CXX = $(CXX) $(CPPFLAGS) -c

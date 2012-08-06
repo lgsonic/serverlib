@@ -39,6 +39,8 @@ bool CTcpClient::Start(unsigned int IP, unsigned short Port)
 		return false;
 	}
 
+	CSigHandle::GetInstance(m_Loop);
+
 	m_Loop.loop();
 
 	return true;

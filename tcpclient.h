@@ -4,6 +4,7 @@
 
 #include "iclient.h"
 #include "outputbuffer.h"
+#include "sighandle.h"
 #include <ev++.h>
 #include <stdlib.h>
 #include <string.h>

@@ -181,8 +181,6 @@ void CTcpConnection::__ErrorCallback()
 
 //====================CTcpServer================================
 
-ev::sig CTcpServer::m_Sig;
-
 bool CTcpServer::Start(unsigned int IP, unsigned short Port)
 {
 	struct sockaddr_in addr;
@@ -205,7 +203,6 @@ bool CTcpServer::Start(unsigned int IP, unsigned short Port)
 
 	m_ListenIo.set(m_Loop);
 	m_Async.set(m_Loop);
-	m_Sig.set(m_Loop);
 
 	m_ListenIo.set<CTcpServer, &CTcpServer::__Accept>(this);
 	m_ListenIo.start(m_Socket, ev::READ);
@@ -213,8 +210,7 @@ bool CTcpServer::Start(unsigned int IP, unsigned short Port)
 	m_Async.set<CTcpServer, &CTcpServer::__AsyncCallback>(this);
 	m_Async.start();
 	
-	m_Sig.set<&CTcpServer::__SigCallback>();
-	m_Sig.start(SIGPIPE);
+	CSigHandle::GetInstance(m_Loop);
 	
 	m_Loop.loop();
 
@@ -228,7 +224,6 @@ bool CTcpServer::Stop()
 
 	m_ListenIo.stop();
 	m_Async.stop();
-	m_Sig.stop();
 	m_Loop.unloop();
 
 	return true;
@@ -344,10 +339,6 @@ void CTcpServer::__AsyncCallback(ev::async &watcher, int revents)
 	{    
 		functions[i]();  
 	}
-}
-
-void CTcpServer::__SigCallback(ev::sig &signal, int revents)
-{
 }
 
 
