@@ -49,8 +49,18 @@ public:
 };
 
 
+class ICommonServer: public ITcpServer
+{
+public:
+	virtual ~ICommonServer(){}
+public:
+	virtual void SetThreadNum(int nThreadNum) = 0;
+};
+
+
 ITcpServer * CreateTcpServerInstance();
 IUdpServer * CreateUdpServerInstance();
+ICommonServer * CreateCommonServerInstance();
 
 
 #endif

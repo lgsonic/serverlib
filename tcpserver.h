@@ -147,26 +147,26 @@ public:
 		pthread_spin_destroy(&m_Spinlock);
 	}
 public:
-	void SetDataHandle(ITcpServerDataHandle * pDataHandle) { m_pDataHandle = pDataHandle; }
-	bool Start(unsigned int IP, unsigned short Port);
-	bool Stop();
-	bool Send(SocketClientData_t sClient, const char *pData, int nDataLen);
-	bool CloseClient(SocketClientData_t sClient);
+	virtual void SetDataHandle(ITcpServerDataHandle * pDataHandle) { m_pDataHandle = pDataHandle; }
+	virtual bool Start(unsigned int IP, unsigned short Port);
+	virtual bool Stop();
+	virtual bool Send(SocketClientData_t sClient, const char *pData, int nDataLen);
+	virtual bool CloseClient(SocketClientData_t sClient);
 public:
-	void SetConnectionTimeout(int nTimeout) { m_nTimeout = nTimeout; }
-	int GetConnectionTimeout() const { return m_nTimeout; }
+	virtual void SetConnectionTimeout(int nTimeout) { m_nTimeout = nTimeout; }
+	virtual int GetConnectionTimeout() const { return m_nTimeout; }
 public:
-	void  OnClientDisconnected(SocketClientData_t sClient, int nErrorCode);
-	void  OnClientDataReceived(SocketClientData_t sClient, const char * pData, int nLen);
-	void  OnClientRecvError(SocketClientData_t sClient, int nErrorCode);
-	void  OnClientSendError(SocketClientData_t sClient, int nErrorCode);
-	void  OnClientTimeout(SocketClientData_t sClient);
+	virtual void  OnClientDisconnected(SocketClientData_t sClient, int nErrorCode);
+	virtual void  OnClientDataReceived(SocketClientData_t sClient, const char * pData, int nDataLen);
+	virtual void  OnClientRecvError(SocketClientData_t sClient, int nErrorCode);
+	virtual void  OnClientSendError(SocketClientData_t sClient, int nErrorCode);
+	virtual void  OnClientTimeout(SocketClientData_t sClient);
 	ev::dynamic_loop & GetLoop() { return m_Loop; }
-private:
+protected:
 	bool __Send(SocketClientData_t sClient, COutputBuffer::Pointer pOutputBuffer);
 	void __Accept(ev::io &watcher, int revents);
 	void __AsyncCallback(ev::async &watcher, int revents);
-private:
+protected:
 	CSocketInfoManager m_SocketInfoManager;
 	ITcpServerDataHandle * m_pDataHandle;
 	int m_nTimeout;

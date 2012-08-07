@@ -16,7 +16,7 @@ LINK.SHARE = $(CXX) $(DY_LDFLAGS)
 LINK.STATIC = $(AR) $(ST_LDFLAGS)
 
 
-SERVERCOMMONOBJS=iserver.o tcpserver.o udpserver.o
+SERVERCOMMONOBJS=iserver.o tcpserver.o udpserver.o commonserver.o
 SERVERLIB=libserver.a
 SERVERLIBSHARE=libserver.so
 SERVERLIBSHAREV=libserver.so$(VERSION_INFO)
@@ -26,14 +26,15 @@ CLIENTLIB=libclient.a
 CLIENTLIBSHARE=libclient.so
 CLIENTLIBSHAREV=libclient.so$(VERSION_INFO)
 
-TESTOBJS=test/tcpechoserver.o test/tcpechoclient.o test/udpechoserver.o test/udpechoclient.o test/tcpproxy.o test/tcpproxytest.o
+TESTOBJS=test/tcpechoserver.o test/tcpechoclient.o test/udpechoserver.o test/udpechoclient.o test/tcpproxy.o test/tcpproxytest.o test/tcpcommonechoserver.o
 TCPECHOSERVER=test/tcpechoserver
 TCPECHOCLIENT=test/tcpechoclient
 UDPECHOSERVER=test/udpechoserver
 UDPECHOCLIENT=test/udpechoclient
 TCPPROXY=test/tcpproxy
 TCPPROXYTEST=test/tcpproxytest
-TESTAPPS=$(TCPECHOSERVER) $(TCPECHOCLIENT) $(UDPECHOSERVER) $(UDPECHOCLIENT) $(TCPPROXY) $(TCPPROXYTEST)
+TCPCOMMONECHOSERVER=test/tcpcommonechoserver
+TESTAPPS=$(TCPECHOSERVER) $(TCPECHOCLIENT) $(UDPECHOSERVER) $(UDPECHOCLIENT) $(TCPPROXY) $(TCPPROXYTEST) $(TCPCOMMONECHOSERVER)
 
 all: $(SERVERLIB) $(SERVERLIBSHARE) $(CLIENTLIB) $(CLIENTLIBSHARE) 
 
@@ -73,6 +74,9 @@ $(TCPPROXY): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
 
 $(TCPPROXYTEST): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
 	$(CXX) -o $@ test/tcpproxytest.o $(LDLIBS) 
+
+$(TCPCOMMONECHOSERVER): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
+	$(CXX) -o $@ test/tcpcommonechoserver.o $(LDLIBS)
 
 
 clean:

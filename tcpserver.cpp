@@ -260,9 +260,9 @@ void CTcpServer::OnClientDisconnected(SocketClientData_t sClient, int nErrorCode
 	m_SocketInfoManager.Remove(sClient);
 }
 
-void CTcpServer::OnClientDataReceived(SocketClientData_t sClient, const char * pData, int nLen)
+void CTcpServer::OnClientDataReceived(SocketClientData_t sClient, const char * pData, int nDataLen)
 {
-	m_pDataHandle->OnClientDataReceived(sClient, pData, nLen);
+	m_pDataHandle->OnClientDataReceived(sClient, pData, nDataLen);
 }
 
 void CTcpServer::OnClientRecvError(SocketClientData_t sClient, int nErrorCode)
