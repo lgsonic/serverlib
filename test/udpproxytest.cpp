@@ -21,6 +21,7 @@ int concurrency = 1;
 
 int repeats = 1;
 
+int number = 0;
 int total = 0;
 int success = 0;
 
@@ -34,7 +35,7 @@ int port;
 
 struct sockaddr_in sock_addr;
 
-const char * testdata = "helloworld";
+const std::string testdata = "helloworld";
 
 class CClient
 {
@@ -87,7 +88,7 @@ private:
 		socklen_t addrlen = sizeof(addr);
 
 		ssize_t nRead = recvfrom(watcher.fd, szBuffer, sizeof(szBuffer), 0, (sockaddr*)&addr, &addrlen);
-		if (nRead == (ssize_t)strlen(testdata))
+		if (nRead == (ssize_t)writebuf.size())
 		{
 			success++;
 			readbytes += nRead;
@@ -112,8 +113,18 @@ private:
 
 	void __WriteCallback(ev::io &watcher) 
 	{
-		int nWritten = sendto(watcher.fd, testdata, strlen(testdata), 0, (sockaddr*)&sock_addr, sizeof(struct sockaddr_in));
-		if (nWritten != (int)strlen(testdata))
+		if (writebuf.empty())
+		{
+			
+			char szSeq[20];
+			snprintf(szSeq, 20, "%d", ++number);
+			int nPktLen = (int)testdata.size() + strlen(szSeq);
+			writebuf.insert(writebuf.end(), (char*)&nPktLen, (char*)&nPktLen+sizeof(int));
+			writebuf += (testdata + szSeq);
+		}
+	
+		int nWritten = sendto(watcher.fd, writebuf.c_str(), writebuf.size(), 0, (sockaddr*)&sock_addr, sizeof(struct sockaddr_in));
+		if (nWritten != (int)writebuf.size())
 		{
 			if (errno == EAGAIN)
 			{
@@ -139,6 +150,7 @@ private:
 private:
 	ev::io io;	
 	int count;
+	std::string writebuf;
 };
 
 void __SigCallback(ev::sig &signal, int revents)

@@ -16,6 +16,15 @@ public:
 };
 
 
+class IUdpClientDataHandle
+{
+public:
+	virtual ~IUdpClientDataHandle(){}
+public:
+	virtual void  OnDataReceived(unsigned int IP, unsigned short Port, const char * pData, int nLen) = 0;
+};
+
+
 class ITcpClient
 {
 public:
@@ -28,7 +37,20 @@ public:
 };
 
 
+class IUdpClient
+{
+public:
+	virtual ~IUdpClient(){}
+public:
+	virtual void SetDataHandle(IUdpClientDataHandle * pDataHandle) = 0;
+	virtual bool Start(unsigned int IP, unsigned short Port) = 0;
+	virtual bool Stop() = 0;
+	virtual void Send(const char * pData, int nDataLen) = 0;
+};
+
+
 ITcpClient * CreateTcpClientInstance();
+IUdpClient * CreateUdpClientInstance();
 
 
 #endif

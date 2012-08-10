@@ -21,12 +21,12 @@ SERVERLIB=libserver.a
 SERVERLIBSHARE=libserver.so
 SERVERLIBSHAREV=libserver.so$(VERSION_INFO)
 
-CLIENTCOMMONOBJS=iclient.o tcpclient.o
+CLIENTCOMMONOBJS=iclient.o tcpclient.o udpclient.o
 CLIENTLIB=libclient.a
 CLIENTLIBSHARE=libclient.so
 CLIENTLIBSHAREV=libclient.so$(VERSION_INFO)
 
-TESTOBJS=test/tcpechoserver.o test/tcpechoclient.o test/udpechoserver.o test/udpechoclient.o test/tcpproxy.o test/tcpproxytest.o test/tcpcommonechoserver.o
+TESTOBJS=test/tcpechoserver.o test/tcpechoclient.o test/udpechoserver.o test/udpechoclient.o test/tcpproxy.o test/tcpproxytest.o test/tcpcommonechoserver.o test/udpproxy.o test/udpproxytest.o
 TCPECHOSERVER=test/tcpechoserver
 TCPECHOCLIENT=test/tcpechoclient
 UDPECHOSERVER=test/udpechoserver
@@ -34,7 +34,9 @@ UDPECHOCLIENT=test/udpechoclient
 TCPPROXY=test/tcpproxy
 TCPPROXYTEST=test/tcpproxytest
 TCPCOMMONECHOSERVER=test/tcpcommonechoserver
-TESTAPPS=$(TCPECHOSERVER) $(TCPECHOCLIENT) $(UDPECHOSERVER) $(UDPECHOCLIENT) $(TCPPROXY) $(TCPPROXYTEST) $(TCPCOMMONECHOSERVER)
+UDPPROXY=test/udpproxy
+UDPPROXYTEST=test/udpproxytest
+TESTAPPS=$(TCPECHOSERVER) $(TCPECHOCLIENT) $(UDPECHOSERVER) $(UDPECHOCLIENT) $(TCPPROXY) $(TCPPROXYTEST) $(TCPCOMMONECHOSERVER) $(UDPPROXY) $(UDPPROXYTEST)
 
 all: $(SERVERLIB) $(SERVERLIBSHARE) $(CLIENTLIB) $(CLIENTLIBSHARE) 
 
@@ -77,6 +79,12 @@ $(TCPPROXYTEST): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
 
 $(TCPCOMMONECHOSERVER): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
 	$(CXX) -o $@ test/tcpcommonechoserver.o $(LDLIBS)
+
+$(UDPPROXY): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
+	$(CXX) -o $@ test/udpproxy.o $(LDLIBS) 
+
+$(UDPPROXYTEST): $(TESTOBJS) $(SERVERLIB) $(CLIENTLIB)
+	$(CXX) -o $@ test/udpproxytest.o $(LDLIBS) 
 
 
 clean:
