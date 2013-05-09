@@ -174,6 +174,11 @@ void CCommonServer::__AddContent(const SocketClientData_t & sClient, const char 
 	while (strData.size() > 4)
 	{
 		int nPktLen = *(int*)&strData[0];
+		if(nPktLen <= 0)	//abnormal
+		{
+			strData.clear();
+			break;
+		}
 		if ((int)strData.size() >= (nPktLen + 4))
 		{
 			__HandlePkt(sClient, strData.c_str(), nPktLen + 4);

@@ -12,8 +12,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <syslog.h>
 
-static const int serverport = 9999;
+static std::string serverip = "0.0.0.0";
+static int serverport = 9999;
 static std::string targetip = "127.0.0.1";
 static int targetport = 8888;
 static int concurrency = 4;
@@ -42,6 +44,13 @@ public:
 		while(strData.size() > 4)
 		{
 			int nPktLen = *(int*)&strData[0];
+
+			if(nPktLen <= 0)	//abnormal
+			{
+				strData.clear();
+				break;
+			}
+			
 			if((int)strData.size() >= (nPktLen + 4))
 			{
 				HandlePkt(sClient, &strData[4], nPktLen);
@@ -126,14 +135,17 @@ public:
 	virtual void  OnDisconnected(SocketClientData_t sClient, int nErrorCode)
 	{
 		m_ContentManager.Remove(sClient);
+		syslog(LOG_USER|LOG_ERR, "tcpproxy disconnected\n");
 	}
 	virtual void  OnSendError(SocketClientData_t sClient, int nErrorCode)
 	{
 		m_ContentManager.Remove(sClient);
+		syslog(LOG_USER|LOG_ERR, "tcpproxy senderror\n");
 	}
 	virtual void  OnRecvError(SocketClientData_t sClient, int nErrorCode)
 	{
 		m_ContentManager.Remove(sClient);
+		syslog(LOG_USER|LOG_ERR, "tcpproxy recverror\n");
 	}
 	virtual void  OnDataReceived(SocketClientData_t sClient, const char * pData, int nLen)
 	{
@@ -195,11 +207,12 @@ private:
 	CTcpProxyClient * m_TcpProxyClients;
 };
 
-int main(int argc, char **argv)
+
+int main(int argc, char* argv[])
 {
-	if (argc < 2)
+	if (argc < 3)
 	{
-		printf("usage: -c concurrency ip:port\n");
+		printf("usage: -c concurrency -s ip:port -d ip:port\n");
 		return 0;
 	}
 
@@ -212,17 +225,26 @@ int main(int argc, char **argv)
 			case 'c':
 				concurrency = atoi(argv[i+1]);
 				break;
+			case 's':
+				{
+					std::string url = argv[i+1];
+					int pos = url.find(':');
+					serverip = url.substr(0, pos);
+					serverport = atoi(url.c_str()+pos+1);
+				}
+				break;
+			case 'd':
+				{
+					std::string url = argv[i+1];
+					int pos = url.find(':');
+					targetip = url.substr(0, pos);
+					targetport = atoi(url.c_str()+pos+1);
+				}
+				break;
 			default:
 				break;
 			}
 			i++;
-		}
-		else
-		{
-			std::string url = argv[i];
-			int pos = url.find(':');
-			targetip = url.substr(0, pos);
-			targetport = atoi(url.c_str()+pos+1);
 		}
 	}
 	
@@ -232,7 +254,7 @@ int main(int argc, char **argv)
 	g_pTcpServer = CreateTcpServerInstance();
 	g_TcpServerDataHandle = new CTcpServerDataHandle();
 	g_pTcpServer->SetDataHandle(g_TcpServerDataHandle);
-	g_pTcpServer->Start(0, serverport);
+	g_pTcpServer->Start(ntohl(inet_addr(serverip.c_str())), serverport);
 
 	return 0;
 }
